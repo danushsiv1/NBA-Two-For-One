@@ -1,6 +1,16 @@
 # NBA Play-by-Play 2-for-1 Strategy Auditor
 
-End-to-end pipeline: download **NBA playoff** play-by-play with [`nba_api`](https://github.com/swar/nba_api), store **partitioned Parquet** (`Season`, `Game_ID`), then compare **2-for-1 window** field goal attempts (**28–38 seconds** left in the quarter) vs **patient late** attempts (**3–27 seconds**, plus short-clock non-heaves). Output: `reports/two_for_one_report.md`.
+## What this means (no NBA background required)
+
+A regulation NBA game is split into **four quarters**, each with a **shot clock**: the offense must attempt a shot within a few dozen seconds or lose the ball. Near the **end of a quarter**, coaches sometimes aim for a **“2-for-1”**: shoot **early enough** that, if things go normally, their team might get **the ball back one more time** before the buzzer—two offensive chances versus the opponent’s one in that closing stretch.
+
+This project does **not** judge strategy like a coach would. It uses official **play-by-play logs** (every shot, score change, and time remaining) from **playoff** games and asks a narrow statistical question: when a team shoots in that **early late-quarter window** (here: about **28–38 seconds left in the quarter**) versus when it shoots **later** with little time left (**about 3–27 seconds**, treating very last-second long “heaves” separately), how does the **shooting team’s score difference** move from that shot through the **end of the quarter**?
+
+The output report compares those groups—how often shots fall in each bucket, and the **average change in lead/deficit** for the offense after the shot until the quarter ends. That is **descriptive**, not proof that one style *causes* better results.
+
+---
+
+**Technical summary:** End-to-end pipeline: download **NBA playoff** play-by-play with [`nba_api`](https://github.com/swar/nba_api), store **partitioned Parquet** (`Season`, `Game_ID`), then compare **2-for-1 window** field goal attempts (**28–38 seconds** left in the quarter) vs **patient late** attempts (**3–27 seconds**, plus short-clock non-heaves). Output: `reports/two_for_one_report.md`.
 
 ---
 
