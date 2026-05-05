@@ -1,4 +1,6 @@
 data/
+reports/
+.spark_local_checkpoint/
 __pycache__/
 *.py[cod]
 .Python
@@ -9,3 +11,4 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .DS_Store
+*.log
