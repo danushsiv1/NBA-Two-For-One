@@ -13,7 +13,7 @@ The output report compares those groups by looking at how often shots fall in ea
 | Choice | What we use | Why |
 |--------|----------------|-----|
 | **Games** | NBA **playoffs** only | Smaller, bounded dataset than the regular season; late-quarter decisions are still rich, and the scope fits a **batch pipeline + resume story** without pulling every regular-season game. |
-| **Seasons** | **2010-2025** playoff years (`SEASON_START` / `SEASON_END` in `config.py`) | **2010** is basic a practical start year for community `nba_api` / Stats workflows over many seasons; **2025** is the configured “through present” bound. The window is **easy to change**; tighten for faster runs or widen if you need more history (then re-ingest). |
+| **Seasons** | **2010-2025** playoff years (`SEASON_START` / `SEASON_END` in `config.py`) | **2010** is the modern NBA era and a practical start year for community `nba_api` / Stats workflows over many seasons; **2025** is the configured “through present” bound. The window is **easy to change**; tighten for faster runs or widen if you need more history (then re-ingest). |
 | **Illustrative full run** | On the order of **~1,336** playoff games and **~14.7k** FGAs split across the two buckets (see `reports/two_for_one_report.md` after you run the analyzer) | These numbers **depend on your ingest** (API availability, skipped games). They are a **concrete sample** for README readers, not a guarantee every rerun matches digit-for-digit. |
 
 ---
@@ -32,18 +32,24 @@ The output report compares those groups by looking at how often shots fall in ea
 
 ---
 
-## Analysis (what a full run showed)
+## Analysis (example full run)
 
-Numbers refresh every time you run the analyzer; the **latest** figures are always in `reports/two_for_one_report.md`. On a **complete** ingest through **2010-2025** playoffs (~**1,336** games, ~**14.7k** FGA rows in the two buckets), results looked like:
+Each time you run the pipeline, the report file **`reports/two_for_one_report.md`** updates with fresh counts. The table below is **one** completed ingest over **2010-2025 playoffs** (about **1,300** playoff games). Your numbers may differ slightly if the API skips games or you change the season range.
 
-| Bucket | Rough FGA count | Mean net margin Δ (pts)* |
-|--------|-----------------|---------------------------|
-| patient_late | ~10.6k | ~-0.55 |
-| two_for_one_window (28-38s) | ~4.1k | ~-0.36 |
+We split shots into two groups: **early late-clock** (about **28-38** seconds left in the quarter, the usual “2-for-1” band) vs **later** shots (**patient late**, mostly **3-27** seconds left, plus short-clock shots that are not long heaves).
 
-\*Shooting team: (margin at quarter end) minus (margin at shot). **Higher is better.**
+For each shot we ask: from that moment until the quarter ends, did the **shooting team’s lead** go **up or down** on average? The column **Mean net margin change** is that swing in points (**positive** means the offense gained ground before the buzzer; **negative** means they lost ground).
 
-**Reading:** The **2-for-1 clock band** had a **less negative** average margin swing to the buzzer than the **patient late** band; that is a **descriptive** association in this sample only. It does **not** prove that “going 2-for-1” *causes* better outcomes (skill, score, fouls, and shot quality differ systematically).
+| Shot group | Rough number of shots | Average swing for offense (points)* |
+|------------|-------------------------|-------------------------------------|
+| Patient late | ~10.6k | ~-0.55 |
+| 2-for-1 window (28-38s) | ~4.1k | ~-0.36 |
+
+\*Average **net change in score margin** for the shooting team from the shot to the end of the quarter.
+
+**In plain language:** In this sample, shots taken with **28-38** seconds left were tied to a **smaller average drop** in the offense’s margin before the buzzer than shots in the **patient late** bucket. There were fewer shots in the 2-for-1 bucket, but the gap between the two averages is **small** compared with how noisy quarter endings are.
+
+**Conclusion:** For this historical playoff slice, the data **describe** a modest statistical tilt toward better **average** margin movement for the **2-for-1** clock band. That is **not** proof that hunting a 2-for-1 **causes** better outcomes: teams, matchups, and shot quality are different in each bucket. Treat the report as a **starting point for discussion**, not a coaching recommendation. Re-run the analyzer after ingesting data to refresh the conclusion with your own numbers.
 
 ---
 
