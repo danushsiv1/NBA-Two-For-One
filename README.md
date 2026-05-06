@@ -4,7 +4,7 @@
 
 An NBA game is always split into **four quarters**, and each possession has a 24 second shot clock. Near the **end of a quarter**, coaches sometimes aim for a **“2-for-1”**: shoot **early enough** (with 28-38 seconds on the clock) that, if things go normally, their team can possibly get **the ball back one more time** before the buzzer. 
 
-This project does **not** judge strategy like a coach would. It uses official **play-by-play logs** (every shot, score change, and time remaining) from **playoff** games and asks a narrow statistical question: when a team shoots in that **early late-quarter window** (here: about **28–38 seconds left in the quarter**) versus when it shoots **later** with little time left (**about 3–27 seconds**, treating very last-second long “heaves” separately), how does the **shooting team’s score difference** move from that shot through the **end of the quarter**?
+This project does **not** judge strategy like a coach would. It uses official **play-by-play logs** (every shot, score change, and time remaining) from **playoff** games and asks a narrow statistical question: when a team shoots in that **early late-quarter window** (here: about **28-38 seconds left in the quarter**) versus when it shoots **later** with little time left (**about 3-27 seconds**, treating very last-second long “heaves” separately), how does the **shooting team’s score difference** move from that shot through the **end of the quarter**?
 
 The output report compares those groups by looking at how often shots fall in each bucket, and the **average change in lead/deficit** for the offense after the shot until the quarter ends. That is **descriptive**, not proof that one style *causes* better results.
 
@@ -13,45 +13,45 @@ The output report compares those groups by looking at how often shots fall in ea
 | Choice | What we use | Why |
 |--------|----------------|-----|
 | **Games** | NBA **playoffs** only | Smaller, bounded dataset than the regular season; late-quarter decisions are still rich, and the scope fits a **batch pipeline + resume story** without pulling every regular-season game. |
-| **Seasons** | **2010–2025** playoff years (`SEASON_START` / `SEASON_END` in `config.py`) | **2010** is a practical start year for community `nba_api` / Stats workflows over many seasons; **2025** is the configured “through present” bound. The window is **easy to change**—tighten for faster runs or widen if you need more history (then re-ingest). |
+| **Seasons** | **2010-2025** playoff years (`SEASON_START` / `SEASON_END` in `config.py`) | **2010** is a practical start year for community `nba_api` / Stats workflows over many seasons; **2025** is the configured “through present” bound. The window is **easy to change**; tighten for faster runs or widen if you need more history (then re-ingest). |
 | **Illustrative full run** | On the order of **~1,336** playoff games and **~14.7k** FGAs split across the two buckets (see `reports/two_for_one_report.md` after you run the analyzer) | These numbers **depend on your ingest** (API availability, skipped games). They are a **concrete sample** for README readers, not a guarantee every rerun matches digit-for-digit. |
 
 ---
 
-**Technical summary:** End-to-end pipeline: download **NBA playoff** play-by-play with [`nba_api`](https://github.com/swar/nba_api), store **partitioned Parquet** (`Season`, `Game_ID`), then compare **2-for-1 window** field goal attempts (**28–38 seconds** left in the quarter) vs **patient late** attempts (**3–27 seconds**, plus short-clock non-heaves). Output: `reports/two_for_one_report.md`.
+**Technical summary:** End-to-end pipeline: download **NBA playoff** play-by-play with [`nba_api`](https://github.com/swar/nba_api), store **partitioned Parquet** (`Season`, `Game_ID`), then compare **2-for-1 window** field goal attempts (**28-38 seconds** left in the quarter) vs **patient late** attempts (**3-27 seconds**, plus short-clock non-heaves). Output: `reports/two_for_one_report.md`.
 
 ---
 
-## What you get
+## Repository contents
 
-- **`data_ingestion.py`** — `LeagueGameFinder` (playoffs) + **`PlayByPlayV3`** (**`PlayByPlayV2`** is deprecated and often empty). Writes `data/playbyplay_parquet/`. Failed games are skipped with a warning after retries.
-- **`spark_analyzer.py`** — **Apache Spark (PySpark)** by default (`SPARK_MASTER` for clusters). **`--engine ray`** runs the same logic per game file in parallel. **`--engine pandas`** for quick validation.
-- **`reports/two_for_one_report.md`** — FGA counts and mean/median **net margin change** for the shooting team from the FGA to the quarter buzzer.
+- **`data_ingestion.py`**: `LeagueGameFinder` (playoffs) + **`PlayByPlayV3`** (**`PlayByPlayV2`** is deprecated and often empty). Writes `data/playbyplay_parquet/`. Failed games are skipped with a warning after retries.
+- **`spark_analyzer.py`**: **Apache Spark (PySpark)** by default (`SPARK_MASTER` for clusters). **`--engine ray`** runs the same logic per game file in parallel. **`--engine pandas`** for quick validation.
+- **`reports/two_for_one_report.md`**: FGA counts and mean/median **net margin change** for the shooting team from the FGA to the quarter buzzer.
 
-> **Causal caution:** This is **observational**—who shoots early vs late is not randomized. The report states that explicitly.
+> **Causal caution:** This is **observational** (who shoots early vs late is not randomized). The report states that explicitly.
 
 ---
 
 ## Analysis (what a full run showed)
 
-Numbers refresh every time you run the analyzer; the **latest** figures are always in `reports/two_for_one_report.md`. On a **complete** ingest through **2010–2025** playoffs (~**1,336** games, ~**14.7k** FGA rows in the two buckets), results looked like:
+Numbers refresh every time you run the analyzer; the **latest** figures are always in `reports/two_for_one_report.md`. On a **complete** ingest through **2010-2025** playoffs (~**1,336** games, ~**14.7k** FGA rows in the two buckets), results looked like:
 
 | Bucket | Rough FGA count | Mean net margin Δ (pts)* |
 |--------|-----------------|---------------------------|
 | patient_late | ~10.6k | ~−0.55 |
-| two_for_one_window (28–38s) | ~4.1k | ~−0.36 |
+| two_for_one_window (28-38s) | ~4.1k | ~−0.36 |
 
-\*Shooting team: (margin at quarter end) − (margin at shot). **Higher is better.**
+\*Shooting team: (margin at quarter end) minus (margin at shot). **Higher is better.**
 
-**Reading:** The **2-for-1 clock band** had a **less negative** average margin swing to the buzzer than the **patient late** band—that is a **descriptive** association in this sample only. It does **not** prove that “going 2-for-1” *causes* better outcomes (skill, score, fouls, and shot quality differ systematically).
+**Reading:** The **2-for-1 clock band** had a **less negative** average margin swing to the buzzer than the **patient late** band; that is a **descriptive** association in this sample only. It does **not** prove that “going 2-for-1” *causes* better outcomes (skill, score, fouls, and shot quality differ systematically).
 
 ---
 
 ## Adding or removing seasons
 
-1. Edit **`config.py`**: set **`SEASON_START`** and **`SEASON_END`** to the playoff **calendar years** you want (the **Finals year**, e.g. `2010` = 2009–10 playoffs).
+1. Edit **`config.py`**: set **`SEASON_START`** and **`SEASON_END`** to the playoff **calendar years** you want (the **Finals year**, e.g. `2010` = 2009-10 playoffs).
 2. Run ingestion so Parquet matches that range:
-   - **Incremental:** `python3 data_ingestion.py` — skips games that already have `part-0.parquet`.
+   - **Incremental:** `python3 data_ingestion.py` skips games that already have `part-0.parquet`.
    - **Force refresh:** `python3 data_ingestion.py --no-skip-existing`.
 3. Run **`python3 spark_analyzer.py`** (or `./run_full_pipeline.sh` for ingest + report).
 
@@ -59,17 +59,17 @@ Clock windows and heave logic live in the same file (`POSSESSION_WINDOW_*`, `MIN
 
 ---
 
-## Why Spark—and why it worked well here
+## Why Spark, and why it worked well here
 
 **Why Spark**
 
-- **Batch analytics on many Parquet files** — playoff seasons mean **hundreds of games** and **millions of rows** of play-by-play; Spark reads partitioned Parquet, joins, filters, and aggregates in **SQL/DataFrame** form without holding everything in one pandas table.
-- **Same stack as “big data” jobs** — Parquet layout matches what you’d put on **HDFS** or cloud storage; set **`SPARK_MASTER`** to **`yarn`**, a **standalone** URL, or **Kubernetes** and the same script path works on a cluster.
+- **Batch analytics on many Parquet files.** Playoff seasons mean **hundreds of games** and **millions of rows** of play-by-play; Spark reads partitioned Parquet, joins, filters, and aggregates in **SQL/DataFrame** form without holding everything in one pandas table.
+- **Same stack as “big data” jobs.** Parquet layout matches what you’d put on **HDFS** or cloud storage; set **`SPARK_MASTER`** to **`yarn`**, a **standalone** URL, or **Kubernetes** and the same script path works on a cluster.
 
 **Why it worked well in this repo**
 
-- **Real Parquet is messy** — different games had **INT64 vs DOUBLE** score columns. A single multi-file read can fail schema merge; this code **reads each game file**, **casts** to a common schema, **unions**, then **`localCheckpoint`** so the driver doesn’t run out of memory on a huge logical plan.
-- **Tuning** — **`SPARK_PARQUET_VECTORIZED=false`** (default) avoids vectorized reader edge cases; **`SPARK_DRIVER_MEMORY`** (default **4g**, env-overridable) helps large unions. Optional **Ray** (`--engine ray`) scales the **same** per-game logic across cores/machines.
+- **Real Parquet is messy.** Different games had **INT64 vs DOUBLE** score columns. A single multi-file read can fail schema merge; this code **reads each game file**, **casts** to a common schema, **unions**, then **`localCheckpoint`** so the driver doesn’t run out of memory on a huge logical plan.
+- **Tuning.** **`SPARK_PARQUET_VECTORIZED=false`** (default) avoids vectorized reader edge cases; **`SPARK_DRIVER_MEMORY`** (default **4g**, env-overridable) helps large unions. Optional **Ray** (`--engine ray`) scales the **same** per-game logic across cores/machines.
 
 ---
 
@@ -105,13 +105,13 @@ mkdir -p ~/Library/Java/JavaVirtualMachines && cd /tmp && \
 
 | Setting | Meaning |
 |--------|---------|
-| `SEASON_START` / `SEASON_END` | Playoff year range (Finals calendar year). Default **2010–2025**. |
-| `POSSESSION_WINDOW_LOW_SEC` / `HIGH_SEC` | 2-for-1 FGA window (default **28–38**). |
+| `SEASON_START` / `SEASON_END` | Playoff year range (Finals calendar year). Default **2010-2025**. |
+| `POSSESSION_WINDOW_LOW_SEC` / `HIGH_SEC` | 2-for-1 FGA window (default **28-38**). |
 | `MIN_LATE_FGA_SECONDS`, `HEAVE_EXCLUDE_DISTANCE_FT` | Patient vs heave rule for sub-3s clock. |
-| `REGULATION_PERIODS_ONLY` | `True` → Q1–Q4 only. |
+| `REGULATION_PERIODS_ONLY` | `True` → Q1-Q4 only. |
 | `REQUEST_SLEEP_SECONDS` | API pacing. |
-| `SPARK_MASTER` (env) | Default **`local[*]`**; use **`yarn`** / **`spark://…`** / K8s on a cluster. |
-| `SPARK_PARQUET_VECTORIZED` (env) | Default **`false`** — safer on mixed Parquet. |
+| `SPARK_MASTER` (env) | Default **`local[*]`**; use **`yarn`** / **`spark://...`** / K8s on a cluster. |
+| `SPARK_PARQUET_VECTORIZED` (env) | Default **`false`** (safer on mixed Parquet). |
 | `SPARK_DRIVER_MEMORY` (env) | Default **4g**; raise if the driver OOMs (e.g. **`8g`**). |
 
 ### Engines (resume-friendly)
@@ -142,7 +142,7 @@ python3 data_ingestion.py --no-skip-existing   # force re-fetch / rewrite Parque
 ### Why does ingest look like “only 2025”?
 
 1. **Order:** Newest playoff **year first** (2025 → 2010).
-2. **`--max-games`:** Stops after N **writes**—often before older seasons appear.
+2. **`--max-games`:** Stops after N **writes**, often before older seasons appear.
 3. **`skip_existing`:** Already-ingested games are skipped.
 
 ---
@@ -162,8 +162,8 @@ python3 data_ingestion.py --no-skip-existing   # force re-fetch / rewrite Parque
 
 1. Quarter-end score = last play of the period (max `action_number`).
 2. Shooting-team margin at FGA and at buzzer from `location` + forward-filled scores.
-3. **Net margin Δ** = margin at buzzer − margin at shot.
-4. Buckets: **two_for_one_window** (28–38 s), **patient_late** (3–27 s + heave-filtered sub-3s).
+3. **Net margin Δ** = margin at buzzer minus margin at shot.
+4. Buckets: **two_for_one_window** (28-38 s), **patient_late** (3-27 s + heave-filtered sub-3s).
 
 ---
 
