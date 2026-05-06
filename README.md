@@ -13,7 +13,7 @@ The output report compares those groups by looking at how often shots fall in ea
 | Choice | What we use | Why |
 |--------|----------------|-----|
 | **Games** | NBA **playoffs** only | Smaller, bounded dataset than the regular season; late-quarter decisions are still rich, and the scope fits a **batch pipeline + resume story** without pulling every regular-season game. |
-| **Seasons** | **2010-2025** playoff years (`SEASON_START` / `SEASON_END` in `config.py`) | **2010** is a practical start year for community `nba_api` / Stats workflows over many seasons; **2025** is the configured “through present” bound. The window is **easy to change**; tighten for faster runs or widen if you need more history (then re-ingest). |
+| **Seasons** | **2010-2025** playoff years (`SEASON_START` / `SEASON_END` in `config.py`) | **2010** is basic a practical start year for community `nba_api` / Stats workflows over many seasons; **2025** is the configured “through present” bound. The window is **easy to change**; tighten for faster runs or widen if you need more history (then re-ingest). |
 | **Illustrative full run** | On the order of **~1,336** playoff games and **~14.7k** FGAs split across the two buckets (see `reports/two_for_one_report.md` after you run the analyzer) | These numbers **depend on your ingest** (API availability, skipped games). They are a **concrete sample** for README readers, not a guarantee every rerun matches digit-for-digit. |
 
 ---
@@ -38,8 +38,8 @@ Numbers refresh every time you run the analyzer; the **latest** figures are alwa
 
 | Bucket | Rough FGA count | Mean net margin Δ (pts)* |
 |--------|-----------------|---------------------------|
-| patient_late | ~10.6k | ~−0.55 |
-| two_for_one_window (28-38s) | ~4.1k | ~−0.36 |
+| patient_late | ~10.6k | ~-0.55 |
+| two_for_one_window (28-38s) | ~4.1k | ~-0.36 |
 
 \*Shooting team: (margin at quarter end) minus (margin at shot). **Higher is better.**
 
