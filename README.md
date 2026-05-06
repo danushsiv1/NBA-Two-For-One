@@ -1,12 +1,20 @@
 # NBA Play-by-Play 2-for-1 Strategy Auditor
 
-## What this means (no NBA background required)
+## What this is about
 
-A regulation NBA game is split into **four quarters**, each with a **shot clock**: the offense must attempt a shot within a few dozen seconds or lose the ball. Near the **end of a quarter**, coaches sometimes aim for a **“2-for-1”**: shoot **early enough** that, if things go normally, their team might get **the ball back one more time** before the buzzer—two offensive chances versus the opponent’s one in that closing stretch.
+An NBA game is always split into **four quarters**, and each possession has a 24 second shot clock. Near the **end of a quarter**, coaches sometimes aim for a **“2-for-1”**: shoot **early enough** (with 28-38 seconds on the clock) that, if things go normally, their team can possibly get **the ball back one more time** before the buzzer. 
 
 This project does **not** judge strategy like a coach would. It uses official **play-by-play logs** (every shot, score change, and time remaining) from **playoff** games and asks a narrow statistical question: when a team shoots in that **early late-quarter window** (here: about **28–38 seconds left in the quarter**) versus when it shoots **later** with little time left (**about 3–27 seconds**, treating very last-second long “heaves” separately), how does the **shooting team’s score difference** move from that shot through the **end of the quarter**?
 
-The output report compares those groups—how often shots fall in each bucket, and the **average change in lead/deficit** for the offense after the shot until the quarter ends. That is **descriptive**, not proof that one style *causes* better results.
+The output report compares those groups by looking at how often shots fall in each bucket, and the **average change in lead/deficit** for the offense after the shot until the quarter ends. That is **descriptive**, not proof that one style *causes* better results.
+
+### Sample used here (default)
+
+| Choice | What we use | Why |
+|--------|----------------|-----|
+| **Games** | NBA **playoffs** only | Smaller, bounded dataset than the regular season; late-quarter decisions are still rich, and the scope fits a **batch pipeline + resume story** without pulling every regular-season game. |
+| **Seasons** | **2010–2025** playoff years (`SEASON_START` / `SEASON_END` in `config.py`) | **2010** is a practical start year for community `nba_api` / Stats workflows over many seasons; **2025** is the configured “through present” bound. The window is **easy to change**—tighten for faster runs or widen if you need more history (then re-ingest). |
+| **Illustrative full run** | On the order of **~1,336** playoff games and **~14.7k** FGAs split across the two buckets (see `reports/two_for_one_report.md` after you run the analyzer) | These numbers **depend on your ingest** (API availability, skipped games). They are a **concrete sample** for README readers, not a guarantee every rerun matches digit-for-digit. |
 
 ---
 
