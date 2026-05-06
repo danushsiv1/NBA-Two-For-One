@@ -306,8 +306,40 @@ def _bucket_table_label(internal_key: str) -> str:
         return f"two_for_one_window ({lo}-{hi})"
     if internal_key == "patient_late":
         # "0-{mn}" = clock below MIN_LATE_FGA_SECONDS (heave rule); "{mn}-{patient_hi}" = patient main band
-        return f"patient_late (0-{mn} ≤ {heave_s}, {mn}-{patient_hi})"
+        return f"patient_late (0-{mn} ≤ {heave_s} ft, {mn}-{patient_hi})"
     return internal_key
+
+
+def _results_table_md(summary_rows: list) -> list[str]:
+    """Aligned markdown table so long bucket labels line up with numeric columns in plain-text editors."""
+    headers = ["Bucket", "FGA count", "Mean net margin Δ (pts)", "Std dev", "Median"]
+    body: list[list[str]] = []
+    for r in summary_rows:
+        med = r.get("median_net_margin_delta")
+        std = r.get("std_net_margin_delta") or 0.0
+        med_s = f"{float(med):.4f}" if med is not None and med == med else "nan"
+        body.append(
+            [
+                _bucket_table_label(r["shot_bucket"]),
+                str(int(r["fga_count"])),
+                f"{float(r['mean_net_margin_delta']):.4f}",
+                f"{float(std):.4f}",
+                med_s,
+            ]
+        )
+    grid = [headers] + body
+    widths = [max(len(grid[row][col]) for row in range(len(grid))) for col in range(5)]
+    num_cols = {1, 2, 3, 4}
+
+    def fmt_row(cells: list[str]) -> str:
+        parts = []
+        for i in range(5):
+            w = widths[i]
+            parts.append(cells[i].rjust(w) if i in num_cols else cells[i].ljust(w))
+        return "| " + " | ".join(parts) + " |"
+
+    sep = "| " + " | ".join("-" * max(3, widths[i]) for i in range(5)) + " |"
+    return [fmt_row(headers), sep] + [fmt_row(row) for row in body]
 
 
 def format_report_md(
@@ -318,7 +350,7 @@ def format_report_md(
 ) -> str:
     """Build markdown report from collected summary rows (dicts)."""
     lines = [
-        "# NBA Playoffs 2-for-1 vs. patient late FGA — report",
+        "# NBA Playoffs 2-for-1 vs. patient late FGA (report)",
         "",
         f"- **Engine:** {backend}",
         "",
@@ -378,21 +410,9 @@ def format_report_md(
         "",
         "## Results",
         "",
-        "| Bucket | FGA count | Mean net margin Δ (pts) | Std dev | Median |",
-        "|--------|-----------|-------------------------|---------|--------|",
     ]
     )
-
-    for r in summary_rows:
-        med = r.get("median_net_margin_delta")
-        std = r.get("std_net_margin_delta") or 0.0
-        label = _bucket_table_label(r["shot_bucket"])
-        lines.append(
-            f"| {label} | {int(r['fga_count'])} | "
-            f"{float(r['mean_net_margin_delta']):.4f} | "
-            f"{float(std):.4f} | "
-            f"{float(med) if med is not None and med == med else float('nan'):.4f} |"
-        )
+    lines.extend(_results_table_md(summary_rows))
 
     lines.extend(
         [
